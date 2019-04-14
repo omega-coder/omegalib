@@ -20,22 +20,26 @@ class BTSnoop(object):
     def __init__(self, file_path):
         self.__version = None
         self.__datalink_type = None
+        self.__last_seek = 0
         try:
             btsnoop_dump = open(file_path, 'rb')
             self.data = btsnoop_dump.read()
         except IOError, (errorno, strerror):
             print("I/O Error({}): {}".format(errorno, strerror))
 
-        if not self.__check_signature():
-            raise Exception
+    def parse(self):
         try:
+            self.__check_signature()
             self.__parse_header()
         except Exception as e:
             print(e)
 
+        return map(lambda rec: (rec[0], rec[2], rec[3], rec[5], rec[6]), __parse_packet_rec(data))
+
     # check file signature
     def __check_signature(self):
-        return self.data[:8] == BTSnoop.MAGIC_NUMBER__
+        if not self.data[:8] == BTSnoop.MAGIC_NUMBER__:
+            raise Exception("Could not check signature!!")
 
     # dump raw binary data
     def dump_raw(self):
