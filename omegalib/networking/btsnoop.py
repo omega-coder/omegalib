@@ -15,7 +15,7 @@ class BTSnoop(object):
         3: ("controller", "host", "event")
     }
     __header_size = struct.calcsize('>II')
-
+    __packet_rec_size = struct.calcsize('>IIIIq')
 
     def __init__(self, file_path):
         self.__version = None
@@ -58,9 +58,43 @@ class BTSnoop(object):
 
 
     def __parse_packet_rec(self, data):
+        """
+            --------------------------
+            | original length        |
+            | 4 bytes
+            --------------------------
+            | included length        |
+            | 4 bytes
+            --------------------------
+            | packet flags           |
+            | 4 bytes
+            --------------------------
+            | cumulative drops       |
+            | 4 bytes
+            --------------------------
+            | timestamp microseconds |
+            | 8 bytes
+            --------------------------
+            | packet data            |
+            --------------------------
+        """
 
+        SEQ_N = 1
+        while True:
+            try:
+                original_length, inc_length, flags, drops, ts_64 = struct.unpack('>IIIIq', self.data[self.__last_seek:self.__last_seek+__packet_rec_size])
+                assert original_length == inc_length
+                data_start_index = self.__last_seek + __packet_rec_size
+                self.__last_seek += (__packet_rec_size + inc_length)
 
+                pkt_data = self.data[data_start_index:self.__last_seek]
 
+                assert len(pkt_data) == inc_length
+
+                yield (SEQ_N, original_length, inc_length, flags, drops, ts_64, pkt_data)
+                SEQ_N += 1
+            except Exception as e:
+                print(e)
 
 
 
