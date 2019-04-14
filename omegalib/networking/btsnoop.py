@@ -53,6 +53,12 @@ class BTSnoop(object):
         if self.__datalink_type != 0x3ea:
             raise Exception('Only H4 Datalink type is supported!')
 
+        self.__last_seek = magic_number_len + __header_size
+
+
+
+    def __parse_packet_rec(self, data):
+
 
 
 
