@@ -101,4 +101,5 @@ class BTSnoop(object):
 if __name__ == "__main__":
     BTSnoop_test = BTSnoop('/home/omega-coder/Documents/ctfs/root-me/networking/bluetooth/ch18.bin')
     recs = BTSnoop_test.parse()
-    print(list(recs)[0]) 
+    for i in recs:
+        print(i)
