@@ -24,7 +24,7 @@ class BTSnoop(object):
         try:
             btsnoop_dump = open(file_path, 'rb')
             self.data = btsnoop_dump.read()
-        except IOError, (errorno, strerror):
+        except IOError (errorno, strerror):
             print("I/O Error({}): {}".format(errorno, strerror))
 
     def parse(self):
@@ -34,7 +34,7 @@ class BTSnoop(object):
         except Exception as e:
             print(e)
 
-        return map(lambda rec: (rec[0], rec[2], rec[3], rec[5], rec[6]), __parse_packet_rec(data))
+        return map(lambda rec: (rec[0], rec[2], rec[3], rec[5], rec[6]), self.__parse_packet_rec())
 
     # check file signature
     def __check_signature(self):
@@ -46,18 +46,18 @@ class BTSnoop(object):
         return self.data
 
     def __parse_header(self):
-        magic_number_len = len(MAGIC_NUMBER__)
-        self.__version, self.__datalink_type = struct.unpack('>II', self.data[magic_number_len:magic_number_len+__header_size])
+        magic_number_len = len(BTSnoop.MAGIC_NUMBER__)
+        self.__version, self.__datalink_type = struct.unpack('>II', self.data[magic_number_len:magic_number_len+BTSnoop.__header_size])
         if self.__version != 1:
             raise Exception('Version {} is not supported!'.format(self.__version))
         if self.__datalink_type != 0x3ea:
             raise Exception('Only H4 Datalink type is supported!')
 
-        self.__last_seek = magic_number_len + __header_size
+        self.__last_seek = magic_number_len + BTSnoop.__header_size
 
 
 
-    def __parse_packet_rec(self, data):
+    def __parse_packet_rec(self):
         """
             --------------------------
             | original length        |
@@ -82,10 +82,10 @@ class BTSnoop(object):
         SEQ_N = 1
         while True:
             try:
-                original_length, inc_length, flags, drops, ts_64 = struct.unpack('>IIIIq', self.data[self.__last_seek:self.__last_seek+__packet_rec_size])
+                original_length, inc_length, flags, drops, ts_64 = struct.unpack('>IIIIq', self.data[self.__last_seek:self.__last_seek+BTSnoop.__packet_rec_size])
                 assert original_length == inc_length
-                data_start_index = self.__last_seek + __packet_rec_size
-                self.__last_seek += (__packet_rec_size + inc_length)
+                data_start_index = self.__last_seek + BTSnoop.__packet_rec_size
+                self.__last_seek += (BTSnoop.__packet_rec_size + inc_length)
 
                 pkt_data = self.data[data_start_index:self.__last_seek]
 
@@ -94,9 +94,11 @@ class BTSnoop(object):
                 yield (SEQ_N, original_length, inc_length, flags, drops, ts_64, pkt_data)
                 SEQ_N += 1
             except Exception as e:
-                print(e)
+                break
 
 
 
 if __name__ == "__main__":
-    main()
+    BTSnoop_test = BTSnoop('/home/omega-coder/Documents/ctfs/root-me/networking/bluetooth/ch18.bin')
+    recs = BTSnoop_test.parse()
+    print(list(recs)[0]) 
